@@ -1,0 +1,64 @@
+FROM ubuntu:latest
+LABEL Maintainer="Martijn Heitling"
+LABEL Description="Dinosaurs CTF" Version="1.0"
+EXPOSE 80/tcp 22/tcp
+
+#Opdatums
+RUN apt-get update && apt-get upgrade -y
+
+#Set locals
+RUN apt-get install locales locales-all -y && locale-gen en_US.UTF-8
+ENV LANG en_US.UTF8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+
+#handy items
+RUN apt-get update && apt-get install vim tmux git curl wget -y
+
+#Bak Specifieke meuk
+
+
+#Install de rest van de meuk
+RUN apt-get install nginx sudo openssh-server -y
+
+#Kopieer de website en script naar de bak
+WORKDIR /var/www/html
+
+###TO BE FIXED
+RUN wget https://www.dropbox.com/s/yuzcrnr5wjgwx0b/stegosaurus.jpg
+RUN wget https://www.dropbox.com/s/yuzcrnr5wjgwx0b/index.html
+RUN wget https://www.dropbox.com/s/yuzcrnr5wjgwx0b/pw.txt
+
+#webservert
+RUN service nginx restart
+
+#Luser creation
+RUN useradd -ms /bin/bash malcolm; chpasswd malcolm:DinosaursAreAwesome
+RUN echo AllowUsers malcolm >> /etc/ssh/sshd_config
+
+#build the privesc
+WORKDIR /home/malcolm
+RUN wget https://www.dropbox.com/s/yuzcrnr5wjgwx0b/readfile.sh
+RUN chmod +x /home/malcolm/readfile.sh
+WORKDIR /etc
+RUN rm -rf sudoers
+RUN wget https://www.dropbox.com/s/yuzcrnr5wjgwx0b/sudoers
+
+#Plant some flags 
+RUN echo ToTheBone{W31C0M370JUR4551CP4RK} > /root/root.txt
+
+#start ssh enzo
+
+#RUN service ssh restart
+
+#set user specific files
+USER malcolm
+WORKDIR /home/malcolm
+RUN touch Infile && echo /home/malcolm/user.txt > Infile
+RUN echo Dino{NedryWasAnAsshole} > /home/malcolm/user.txt
+
+USER root
+
+#Ruim je rommel nou eens op
+RUN apt-get autoclean -y && apt-get autoremove -y && rm -rf /tmp/*
